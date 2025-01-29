@@ -1,6 +1,6 @@
 const express = require("express");
 const app = express();
-const port = 5000;
+const port = process.env.port || 5000;
 require("dotenv").config();
 const cors = require("cors");
 const morgan = require("morgan");
@@ -47,20 +47,27 @@ async function run() {
     });
     app.get("/jewellery/:id", async (req, res) => {
       const id = req.params.id;
+      console.log(id);
       const result = await jewelleryCollection.findOne({
         _id: new ObjectId(id),
       });
       res.send(result);
     });
     app.put("/jewellery/:id", async (req, res) => {
-      const myData = req.body;
       const id = req.params.id;
-      const result = await jewelleryCollection.updateOne(
-        { _id: new ObjectId(id) },
-        { $set: myData }
-      );
-      res.send(result);
+      const { _id, ...updateData } = req.body;
+
+      try {
+        const result = await jewelleryCollection.updateOne(
+          { _id: new ObjectId(id) },
+          { $set: updateData }
+        );
+        res.send(result);
+      } catch (error) {
+        res.status(500).send({ message: "Update failed", error });
+      }
     });
+
     app.delete("/jewellery/:id", async (req, res) => {
       const id = req.params.id;
       const result = await jewelleryCollection.deleteOne({
